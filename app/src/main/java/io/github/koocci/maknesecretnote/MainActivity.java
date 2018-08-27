@@ -8,6 +8,12 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ListView;
+
+import java.util.ArrayList;
+
+import io.github.koocci.maknesecretnote.Adapter.FoodMarketAdapter;
+import io.github.koocci.maknesecretnote.DO.FoodMarketItem;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +32,28 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+        ListView listView = findViewById(R.id.list_view);
+        ArrayList<FoodMarketItem> items = new ArrayList<>();
+
+//        private int thumbnail;
+//        private String name;
+//        private String loc;
+//        private int pref;
+//        private int count;
+
+        for(int i = 1; i < 100; i++){
+            items.add(new FoodMarketItem(
+                    R.drawable.ic_launcher_background,
+                    "Test",
+                    "우리집앞ㅁㄴㅇ러미ㅏㅇ너라ㅣ먼ㅇ리ㅏ머이ㅏ러미ㅏㅇㄴ러",
+                    5,
+                    10000));
+        }
+
+        FoodMarketAdapter adapter = new FoodMarketAdapter(this, R.layout.food_market_item, items);
+
+        listView.setAdapter(adapter);
     }
 
     @Override
