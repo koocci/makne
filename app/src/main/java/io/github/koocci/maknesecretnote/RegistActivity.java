@@ -2,6 +2,7 @@ package io.github.koocci.maknesecretnote;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,12 +28,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -44,6 +48,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -52,7 +59,6 @@ import java.util.Locale;
 
 import noman.googleplaces.NRPlaces;
 
-import noman.googleplaces.Place;
 import noman.googleplaces.PlaceType;
 import noman.googleplaces.PlacesException;
 import noman.googleplaces.PlacesListener;
@@ -74,6 +80,9 @@ public class RegistActivity extends AppCompatActivity
     private static final int UPDATE_INTERVAL_MS = 1000;  // 1초
     private static final int FASTEST_UPDATE_INTERVAL_MS = 500; // 0.5초
 
+    private static final int PLACE_PICKER_REQUEST =1;
+
+
     private AppCompatActivity mActivity;
     boolean askPermissionOnceAgain = false;
     boolean mRequestingLocationUpdates = false;
@@ -92,6 +101,7 @@ public class RegistActivity extends AppCompatActivity
 
     TextView market_name;
     TextView market_loc;
+    Button search;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +129,22 @@ public class RegistActivity extends AppCompatActivity
 
         market_name = findViewById(R.id.market_name);
         market_loc = findViewById(R.id.market_loc);
+        search = findViewById(R.id.search);
+        search.setOnClickListener(new Button.OnClickListener()
+        { @Override
+        public void onClick(View view)
+        {
+            PlacePicker.IntentBuilder intentBuilder = new PlacePicker.IntentBuilder();
+            try {
+                Intent intent = intentBuilder.build(RegistActivity.this);
+                startActivityForResult(intent,PLACE_PICKER_REQUEST);
+            } catch (GooglePlayServicesRepairableException e) {
+                e.printStackTrace();
+            } catch (GooglePlayServicesNotAvailableException e) {
+                e.printStackTrace();
+            }
+        }
+        });
 
         previous_marker = new ArrayList<Marker>();
 
@@ -152,8 +178,23 @@ public class RegistActivity extends AppCompatActivity
 
     }
 
+    public void addMarker(noman.googleplaces.Place place){
+        LatLng latLng
+                = new LatLng(place.getLatitude()
+                , place.getLongitude());
+
+
+        String markerSnippet = getCurrentAddress(latLng);
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.title(place.getName());
+        markerOptions.snippet(markerSnippet);
+        Marker item = mGoogleMap.addMarker(markerOptions);
+        previous_marker.add(item);
+    }
+
     @Override
-    public void onPlacesSuccess(final List<Place> places) {
+    public void onPlacesSuccess(final List<noman.googleplaces.Place> places) {
 
         runOnUiThread(new Runnable() {
 
@@ -162,21 +203,8 @@ public class RegistActivity extends AppCompatActivity
             public void run() {
 
                 for (noman.googleplaces.Place place : places) {
-
-                    LatLng latLng
-                            = new LatLng(place.getLatitude()
-                            , place.getLongitude());
-
-
-                    String markerSnippet = getCurrentAddress(latLng);
-                    MarkerOptions markerOptions = new MarkerOptions();
-                    markerOptions.position(latLng);
-                    markerOptions.title(place.getName());
-                    markerOptions.snippet(markerSnippet);
-                    Marker item = mGoogleMap.addMarker(markerOptions);
-                    previous_marker.add(item);
+                    addMarker(place);
                 }
-
 
                 //중복 마커 제거
                 HashSet<Marker> hashSet = new HashSet<Marker>();
@@ -187,11 +215,15 @@ public class RegistActivity extends AppCompatActivity
         });
     }
 
-    public void showPlaceInformation(final LatLng location) {
+    public void clearMapNMarker(){
         mGoogleMap.clear();//지도 클리어
 
         if (previous_marker != null)
             previous_marker.clear();//지역정보 마커 클리어
+    }
+
+    public void showPlaceInformation(final LatLng location) {
+        clearMapNMarker();
 
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(location, 18);
         mGoogleMap.moveCamera(cameraUpdate);
@@ -681,30 +713,48 @@ public class RegistActivity extends AppCompatActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == PLACE_PICKER_REQUEST && resultCode == Activity.RESULT_OK){
+            final Place place = PlacePicker.getPlace(RegistActivity.this, data);
+            final CharSequence name = place.getName();
+            final CharSequence address = place.getAddress();
+            String attributions = (String) place.getAttributions();
+            if (attributions == null) {
+                attributions = "";
+            }
+            market_name.setText(name);
+            market_loc.setText(address);
 
-        switch (requestCode) {
+            clearMapNMarker();
 
-            case GPS_ENABLE_REQUEST_CODE:
+            String markerSnippet = address.toString();
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(place.getLatLng());
+            markerOptions.title(name.toString());
+            markerOptions.snippet(markerSnippet);
+            Marker item = mGoogleMap.addMarker(markerOptions);
+            previous_marker.add(item);
 
-                //사용자가 GPS 활성 시켰는지 검사
-                if (checkLocationServicesStatus()) {
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(place.getLatLng(), 18);
+            mGoogleMap.moveCamera(cameraUpdate);
+
+        }
+        else{
+            super.onActivityResult(requestCode, resultCode, data);
+            switch (requestCode) {
+                case GPS_ENABLE_REQUEST_CODE:
+                    //사용자가 GPS 활성 시켰는지 검사
                     if (checkLocationServicesStatus()) {
-
-                        Log.d(TAG, "onActivityResult : 퍼미션 가지고 있음");
-
-
-                        if ( mGoogleApiClient.isConnected() == false ) {
-
-                            Log.d( TAG, "onActivityResult : mGoogleApiClient connect ");
-                            mGoogleApiClient.connect();
+                        if (checkLocationServicesStatus()) {
+                            Log.d(TAG, "onActivityResult : 퍼미션 가지고 있음");
+                            if ( mGoogleApiClient.isConnected() == false ) {
+                                Log.d( TAG, "onActivityResult : mGoogleApiClient connect ");
+                                mGoogleApiClient.connect();
+                            }
+                            return;
                         }
-                        return;
                     }
-                }
-
-                break;
+                    break;
+            }
         }
     }
-
 }
