@@ -20,10 +20,12 @@ import android.widget.Spinner;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import io.github.koocci.maknesecretnote.Adapter.FoodMarketAdapter;
 import io.github.koocci.maknesecretnote.Adapter.MainSpinnerAdapter;
 import io.github.koocci.maknesecretnote.DO.FoodMarketItem;
+import io.github.koocci.maknesecretnote.Handler.DBHelper;
 
 public class MainActivity extends RootActivity
     implements AdapterView.OnItemSelectedListener {
@@ -54,6 +56,11 @@ public class MainActivity extends RootActivity
 
         ListView listView = findViewById(R.id.list_view);
         ArrayList<FoodMarketItem> items = new ArrayList<>();
+
+
+        DBHelper db = new DBHelper(this);
+        List<Map<String, Object>> list = db.selectList("");
+
 
         for(int i = 1; i < 100; i++){
             items.add(new FoodMarketItem(
