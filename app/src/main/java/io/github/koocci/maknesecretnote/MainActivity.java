@@ -14,7 +14,10 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -22,7 +25,10 @@ import java.util.ArrayList;
 import io.github.koocci.maknesecretnote.Adapter.FoodMarketAdapter;
 import io.github.koocci.maknesecretnote.DO.FoodMarketItem;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity
+    implements AdapterView.OnItemSelectedListener {
+
+    private static final String TAG = "mainActivity~";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,11 +63,42 @@ public class MainActivity extends AppCompatActivity {
                     10000));
         }
 
-        FoodMarketAdapter adapter = new FoodMarketAdapter(this, R.layout.food_market_item, items);
+        FoodMarketAdapter listAdapter = new FoodMarketAdapter(this, R.layout.food_market_item, items);
 
-        listView.setAdapter(adapter);
+        listView.setAdapter(listAdapter);
+
+        Spinner spinner = findViewById(R.id.spinner);
+
+        spinner.setOnItemSelectedListener(this);
+
+        String[] array = {
+                "과장님 선호도 순",
+                "팀장님 선호도 순",
+                "상무님 선호도 순"
+
+        };
+
+        ArrayAdapter adapter = new ArrayAdapter(
+                getApplicationContext(), // 현재화면의 제어권자
+                android.R.layout.simple_spinner_item, // 레이아웃
+                array); // 데이터
+
+        spinner.setAdapter(adapter);
 
         //getAppKeyHash();
+    }
+
+    public void onItemSelected(AdapterView<?> parent, View view,
+                               int pos, long id) {
+        // An item was selected. You can retrieve the selected item using
+        // parent.getItemAtPosition(pos)
+
+        Log.e(TAG, "pos : " + pos);
+        Log.e(TAG, "id : " + id);
+    }
+
+    public void onNothingSelected(AdapterView<?> parent) {
+        // Another interface callback
     }
 
     @Override

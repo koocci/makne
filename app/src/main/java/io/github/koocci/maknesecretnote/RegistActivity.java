@@ -165,7 +165,7 @@ public class RegistActivity extends AppCompatActivity
 
     @Override
     public void onPlacesFailure(PlacesException e) {
-
+        Log.d(TAG, "onPlacesFailure : " + e.getMessage());
     }
 
     @Override
