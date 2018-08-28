@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -27,6 +28,14 @@ public class FoodMarketAdapter extends BaseAdapter {
     private int layout;
     private ArrayList<FoodMarketItem> items;
     private LayoutInflater inflater;
+
+    private static final int CHINESE = 1;
+    private static final int KOREAN = 2;
+    private static final int JAPANESE = 3;
+    private static final int CHICKEN = 4;
+    private static final int MEAT = 5;
+    private static final int EXTRA = 6;
+
 
     public FoodMarketAdapter(Context context, int layout, ArrayList<FoodMarketItem> items) {
         this.context = context;
@@ -59,17 +68,42 @@ public class FoodMarketAdapter extends BaseAdapter {
         ImageView thumb = convertView.findViewById(R.id.market_thumb);
         thumb.setImageResource((items.get(position).getThumbnail()));
 
+        ImageView type = convertView.findViewById(R.id.market_type);
+        switch((items.get(position).getType())){
+            case CHINESE:
+                type.setImageResource(R.drawable.chinese);
+                break;
+            case KOREAN:
+                type.setImageResource(R.drawable.korean);
+                break;
+            case JAPANESE:
+                type.setImageResource(R.drawable.japanese);
+                break;
+            case CHICKEN:
+                type.setImageResource(R.drawable.chicken);
+                break;
+            case MEAT:
+                type.setImageResource(R.drawable.meat);
+                break;
+            case EXTRA:
+                type.setImageResource(R.drawable.extra_food);
+                break;
+        }
+
+
         TextView name = convertView.findViewById(R.id.market_name);
         name.setText(items.get(position).getName());
 
         TextView loc = convertView.findViewById(R.id.market_loc);
         loc.setText(items.get(position).getLoc());
 
-        TextView pref = convertView.findViewById(R.id.market_pref);
-        pref.setText(items.get(position).getPref() + "");
+//        TextView pref = convertView.findViewById(R.id.market_pref);
+//        pref.setText(items.get(position).getPref() + "");
+        RatingBar pref = convertView.findViewById(R.id.market_pref);
+        pref.setRating(items.get(position).getPref());
 
         TextView cnt = convertView.findViewById(R.id.market_cnt);
-        cnt.setText(items.get(position).getCount() + "");
+        cnt.setText(items.get(position).getCount() + " 회 방문");
 
         return convertView;
     }

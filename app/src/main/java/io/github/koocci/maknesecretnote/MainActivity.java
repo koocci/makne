@@ -4,10 +4,8 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
@@ -21,20 +19,29 @@ import android.widget.Spinner;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.List;
 
 import io.github.koocci.maknesecretnote.Adapter.FoodMarketAdapter;
+import io.github.koocci.maknesecretnote.Adapter.MainSpinnerAdapter;
 import io.github.koocci.maknesecretnote.DO.FoodMarketItem;
 
 public class MainActivity extends AppCompatActivity
     implements AdapterView.OnItemSelectedListener {
 
     private static final String TAG = "mainActivity~";
+    private static final int CHINESE = 1;
+    private static final int KOREAN = 2;
+    private static final int JAPANESE = 3;
+    private static final int CHICKEN = 4;
+    private static final int MEAT = 5;
+    private static final int EXTRA = 6;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle("");
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -48,19 +55,14 @@ public class MainActivity extends AppCompatActivity
         ListView listView = findViewById(R.id.list_view);
         ArrayList<FoodMarketItem> items = new ArrayList<>();
 
-//        private int thumbnail;
-//        private String name;
-//        private String loc;
-//        private int pref;
-//        private int count;
-
         for(int i = 1; i < 100; i++){
             items.add(new FoodMarketItem(
-                    R.drawable.ic_launcher_background,
+                    R.drawable.people,
                     "Test",
-                    "우리집앞ㅁㄴㅇ러미ㅏㅇ너라ㅣ먼ㅇ리ㅏ머이ㅏ러미ㅏㅇㄴ러",
-                    5,
-                    10000));
+                    "TestTestTestTestTestTestTestTestTestTestTest",
+                    3,
+                    10000,
+                    KOREAN));
         }
 
         FoodMarketAdapter listAdapter = new FoodMarketAdapter(this, R.layout.food_market_item, items);
@@ -71,19 +73,18 @@ public class MainActivity extends AppCompatActivity
 
         spinner.setOnItemSelectedListener(this);
 
-        String[] array = {
-                "과장님 선호도 순",
-                "팀장님 선호도 순",
-                "상무님 선호도 순"
+        List<String> data = new ArrayList<>();
+        data.add("종합 선호도 순");
+        data.add("홍길동 전무님 선호도 순");
+        data.add("홍길동 상무님 선호도 순");
+        data.add("홍길동 팀장님 선호도 순");
+        data.add("홍길동 차장님 선호도 순");
+        data.add("홍길동 부장님 선호도 순");
+        data.add("홍길동 과장님 선호도 순");
+        data.add("홍길동 대리님 선호도 순");
 
-        };
-
-        ArrayAdapter adapter = new ArrayAdapter(
-                getApplicationContext(), // 현재화면의 제어권자
-                android.R.layout.simple_spinner_item, // 레이아웃
-                array); // 데이터
-
-        spinner.setAdapter(adapter);
+        MainSpinnerAdapter spinAdapter = new MainSpinnerAdapter(this, data);
+        spinner.setAdapter(spinAdapter);
 
         //getAppKeyHash();
     }
@@ -104,8 +105,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+        //getMenuInflater().inflate(R.menu.menu_main, menu);
+        return false;
     }
 
     private void getAppKeyHash() {

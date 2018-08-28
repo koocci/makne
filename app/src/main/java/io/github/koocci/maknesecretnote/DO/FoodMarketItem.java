@@ -18,13 +18,15 @@ public class FoodMarketItem {
     private String loc;
     private int pref;
     private int count;
+    private int type;
 
-    public FoodMarketItem(int thumbnail, String name, String loc, int pref, int count) {
+    public FoodMarketItem(int thumbnail, String name, String loc, int pref, int count, int type) {
         this.thumbnail = thumbnail;
         this.name = name;
         this.loc = loc;
         this.pref = pref;
         this.count = count;
+        this.type = type;
     }
 
     public int getThumbnail() {
@@ -65,5 +67,13 @@ public class FoodMarketItem {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
     }
 }

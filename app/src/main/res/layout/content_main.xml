@@ -10,16 +10,33 @@
     tools:context="io.github.koocci.maknesecretnote.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <Spinner
-        android:id="@+id/spinner"
+    <LinearLayout
+        android:layout_margin="3dp"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1">
 
+        <android.support.v4.widget.Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="5"/>
+
+        <Spinner
+            android:id="@+id/spinner"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="4"
+            android:background="@drawable/main_spinner_shape" />
+
+    </LinearLayout>
     <ListView
         android:id="@+id/list_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="9"/>
+        android:layout_weight="12"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="5dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"/>
 
 </LinearLayout>
