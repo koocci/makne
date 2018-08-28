@@ -25,7 +25,7 @@ import io.github.koocci.maknesecretnote.Adapter.FoodMarketAdapter;
 import io.github.koocci.maknesecretnote.Adapter.MainSpinnerAdapter;
 import io.github.koocci.maknesecretnote.DO.FoodMarketItem;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends RootActivity
     implements AdapterView.OnItemSelectedListener {
 
     private static final String TAG = "mainActivity~";
