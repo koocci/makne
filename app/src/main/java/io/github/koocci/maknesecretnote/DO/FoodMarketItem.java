@@ -5,36 +5,41 @@ package io.github.koocci.maknesecretnote.DO;
  *
  * 음식점 리스트 아이템
  *
- * thumbnail : 썸네일
- * name : 이름
- * loc : 위치
- * pref : 평균 선호도
- * count : 방문 횟수
  */
 
 public class FoodMarketItem {
-    private int thumbnail;
+
+    private int id;
     private String name;
-    private String loc;
+    private String phone;
+    private String address;
+    private String officeHours;
+    private int visitCount;
+    private int category;
+    private String imagePath;
     private int pref;
-    private int count;
-    private int type;
+    private String comment;
 
-    public FoodMarketItem(int thumbnail, String name, String loc, int pref, int count, int type) {
-        this.thumbnail = thumbnail;
+
+    public FoodMarketItem(int id, String name, String phone, String address, String officeHours, int visitCount, int category, String imagePath, int pref, String comment) {
+        this.id = id;
         this.name = name;
-        this.loc = loc;
+        this.phone = phone;
+        this.address = address;
+        this.officeHours = officeHours;
+        this.visitCount = visitCount;
+        this.category = category;
+        this.imagePath = imagePath;
         this.pref = pref;
-        this.count = count;
-        this.type = type;
+        this.comment = comment;
     }
 
-    public int getThumbnail() {
-        return thumbnail;
+    public int getId() {
+        return id;
     }
 
-    public void setThumbnail(int thumbnail) {
-        this.thumbnail = thumbnail;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -45,12 +50,52 @@ public class FoodMarketItem {
         this.name = name;
     }
 
-    public String getLoc() {
-        return loc;
+    public String getPhone() {
+        return phone;
     }
 
-    public void setLoc(String loc) {
-        this.loc = loc;
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getOfficeHours() {
+        return officeHours;
+    }
+
+    public void setOfficeHours(String officeHours) {
+        this.officeHours = officeHours;
+    }
+
+    public int getVisitCount() {
+        return visitCount;
+    }
+
+    public void setVisitCount(int visitCount) {
+        this.visitCount = visitCount;
+    }
+
+    public int getCategory() {
+        return category;
+    }
+
+    public void setCategory(int category) {
+        this.category = category;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
     }
 
     public int getPref() {
@@ -61,19 +106,11 @@ public class FoodMarketItem {
         this.pref = pref;
     }
 
-    public int getCount() {
-        return count;
+    public String getComment() {
+        return comment;
     }
 
-    public void setCount(int count) {
-        this.count = count;
-    }
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 }

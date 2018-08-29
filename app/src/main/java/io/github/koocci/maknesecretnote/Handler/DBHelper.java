@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 import io.github.koocci.maknesecretnote.DO.FoodMarketItem;
+import io.github.koocci.maknesecretnote.DO.PrefItem;
+
+import static android.content.ContentValues.TAG;
 
 public class DBHelper extends SQLiteOpenHelper {
     private final String dbName = "secretnote.db";
@@ -109,15 +112,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // =========================================================
 
-
-//    CREATE TABLE `preference` (
-//            `pref_id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-//            `market_id`	INTEGER NOT NULL,
-//            `name`	TEXT NOT NULL,
-//            `score`	INTEGER NOT NULL,
-//    FOREIGN KEY(`market_id`) REFERENCES `market`(`id`)
-//            );
-
     public void insertPref(int market_id, String name, int score){
         SQLiteDatabase db = getWritableDatabase();
         ContentValues recordValues = new ContentValues();
@@ -130,7 +124,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    public int insertMarket(String name, String phone, String address, String officehours, int visitcount, String category, String imagepath ) {
+    public int insertMarket(String name, String phone, String address, String officehours, int visitcount, String category, String imagepath, String comment ) {
         Log.e("helper", "insert");
         Log.e("after", imagepath);
         SQLiteDatabase db = getWritableDatabase();
@@ -144,51 +138,96 @@ public class DBHelper extends SQLiteOpenHelper {
         recordValues.put("visitcount", visitcount);
         recordValues.put("category", category);
         recordValues.put("imagepath", imagepath);
+        recordValues.put("comment", comment);
 
         int newId = (int) db.insert("market", null, recordValues);
-        Log.i("rowPosition", newId + "");
-//        db.execSQL("INSERT INTO store (name, phone, address, officehours, preference, visitedcount) VALUES " +
-//                " (NULL, ?, ?, datetime('now','localtime'))", new Object[] {name, phone, address, officehours, preference, visitcount});
         db.close();
 
         return newId;
     }
 
-    public List<Map<String, Object>> selectDetail(int market_id) {
-        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+    public ArrayList<FoodMarketItem> selectDetail(int market_id) {
+        ArrayList<FoodMarketItem> data = new ArrayList<>();
 
         SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT a.* FROM market WHERE market_id = " + market_id + ";", null);
+        Cursor cursor = db.rawQuery("SELECT id, name, phone, address, " +
+                "officehours, visitcount, category, imagepath, " +
+                "(SELECT SUM(score) / COUNT(*) FROM preference WHERE market_id = " + market_id + ") as pref, " +
+                "comment " +
+                "FROM market WHERE id = " + market_id + ";", null);
 
         while(cursor.moveToNext()) {
-            Map<String, Object> map = new HashMap<String, Object>();
-            map.put("id", cursor.getInt(0));
-            map.put("name", cursor.getString(1));
-            map.put("phone", cursor.getString(2));
-            map.put("address", cursor.getString(3));
-            map.put("officehours", cursor.getString(4));
-            map.put("visitcount", cursor.getInt(5));
-            map.put("category", cursor.getInt(6));
-            map.put("imagepath", cursor.getString(7));
+            FoodMarketItem item = new FoodMarketItem(
+                    cursor.getInt(0),
+                    cursor.getString(1),
+                    cursor.getString(2),
+                    cursor.getString(3),
+                    cursor.getString(4),
+                    cursor.getInt(5),
+                    cursor.getInt(6),
+                    cursor.getString(7),
+                    cursor.getInt(8),
+                    cursor.getString(9)
+            );
 
-            list.add(map);
+            data.add(item);
         }
 
         db.close();
 
-        return list;
+        return data;
+    }
+
+    public ArrayList<PrefItem> selectMarketPref(int market_id) {
+        ArrayList<PrefItem> data = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT pref_id, name, score FROM preference WHERE market_id = " + market_id + ";", null);
+
+        while(cursor.moveToNext()) {
+            PrefItem item = new PrefItem(
+                    cursor.getInt(0),
+                    cursor.getString(1),
+                    cursor.getInt(2)
+            );
+
+            data.add(item);
+        }
+
+        db.close();
+
+        return data;
+    }
+
+    public List<String> selectListPref() {
+        List<String> data = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        Log.e(TAG, "db.getPath() : " + db.getPath());
+
+        Cursor cursor = db.rawQuery("SELECT DISTINCT name FROM preference;", null);
+        data.add("종합");
+
+        while(cursor.moveToNext()) {
+            data.add(cursor.getString(0));
+        }
+
+        db.close();
+
+        return data;
     }
 
     public ArrayList<FoodMarketItem> selectList(String name) {
-        ArrayList<FoodMarketItem> data = new ArrayList<FoodMarketItem>();
+        ArrayList<FoodMarketItem> data = new ArrayList<>();
         String Where = "";
         if(name != null){
             Where = "WHERE b.name = \"" + name + "\" ";
         }
 
-
         SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT a.* FROM market as a " +
+        Cursor cursor = db.rawQuery("SELECT a.id, a.name, a.phone, a.address, " +
+                "a.officehours, a.visitcount, a.category, " +
+                "a.imagepath, (c.score_sum / c.score_cnt), a.comment FROM market as a " +
                 "LEFT JOIN (SELECT b.market_id, SUM(b.score) as score_sum, COUNT(b.pref_id) as score_cnt " +
                 "FROM preference as b " +
                 Where +
@@ -197,32 +236,31 @@ public class DBHelper extends SQLiteOpenHelper {
                 "ORDER BY c.score_sum / c.score_cnt DESC;", null);
 
         while(cursor.moveToNext()) {
-            FoodMarketItem item = new FoodMarketItem();
-            map.put("id", cursor.getInt(0));
-            map.put("name", cursor.getString(1));
-            map.put("phone", cursor.getString(2));
-            map.put("address", cursor.getString(3));
-            map.put("officehours", cursor.getString(4));
-            map.put("visitcount", cursor.getInt(5));
-            map.put("category", cursor.getInt(6));
-            map.put("imagepath", cursor.getString(7));
-
-            list.add(map);
+            FoodMarketItem item = new FoodMarketItem(
+                    cursor.getInt(0),
+                    cursor.getString(1),
+                    cursor.getString(2),
+                    cursor.getString(3),
+                    cursor.getString(4),
+                    cursor.getInt(5),
+                    cursor.getInt(6),
+                    cursor.getString(7),
+                    cursor.getInt(8),
+                    cursor.getString(9)
+            );
+            data.add(item);
         }
 
         db.close();
 
-        return list;
+        return data;
     }
 }
 
 
 /*
 *
-* DO item 고치기 DB랑 맞춰서
-* SELECT LIST에 평균 선호도도 뽑기
-* SELECT PREF 뽑기
-*
+* db delete 짜달라
 *
 *
 * */

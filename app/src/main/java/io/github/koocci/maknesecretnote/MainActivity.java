@@ -25,6 +25,7 @@ import java.util.Map;
 import io.github.koocci.maknesecretnote.Adapter.FoodMarketAdapter;
 import io.github.koocci.maknesecretnote.Adapter.MainSpinnerAdapter;
 import io.github.koocci.maknesecretnote.DO.FoodMarketItem;
+import io.github.koocci.maknesecretnote.DO.PrefItem;
 import io.github.koocci.maknesecretnote.Handler.DBHelper;
 
 public class MainActivity extends RootActivity
@@ -37,6 +38,13 @@ public class MainActivity extends RootActivity
     private static final int CHICKEN = 4;
     private static final int MEAT = 5;
     private static final int EXTRA = 6;
+
+    private static final int DEFAULT = 0;
+
+    FoodMarketAdapter listAdapter;
+    List<String> prefList;
+    DBHelper db;
+    ArrayList<FoodMarketItem> items;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,44 +63,48 @@ public class MainActivity extends RootActivity
         });
 
         ListView listView = findViewById(R.id.list_view);
-        ArrayList<FoodMarketItem> items = new ArrayList<>();
+        db = new DBHelper(this);
+        items = db.selectList(null);
+        Log.e(TAG, "main items : " + items.toString());
 
-
-        DBHelper db = new DBHelper(this);
-        List<Map<String, Object>> list = db.selectList("");
-
-
-        for(int i = 1; i < 100; i++){
-            items.add(new FoodMarketItem(
-                    R.drawable.people,
-                    "Test",
-                    "TestTestTestTestTestTestTestTestTestTestTest",
-                    3,
-                    10000,
-                    KOREAN));
-        }
-
-        FoodMarketAdapter listAdapter = new FoodMarketAdapter(this, R.layout.food_market_item, items);
+        listAdapter = new FoodMarketAdapter(this, R.layout.food_market_item, items);
 
         listView.setAdapter(listAdapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                FoodMarketItem data = items.get(position);
+                Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+                intent.putExtra("market_id", data.getId());
+                startActivity(intent);
+            }
+        });
 
         Spinner spinner = findViewById(R.id.spinner);
 
         spinner.setOnItemSelectedListener(this);
 
-        List<String> data = new ArrayList<>();
-        data.add("종합 선호도 순");
-        data.add("홍길동 전무님 선호도 순");
-        data.add("홍길동 상무님 선호도 순");
-        data.add("홍길동 팀장님 선호도 순");
-        data.add("홍길동 차장님 선호도 순");
-        data.add("홍길동 부장님 선호도 순");
-        data.add("홍길동 과장님 선호도 순");
-        data.add("홍길동 대리님 선호도 순");
+        prefList = db.selectListPref();
 
-        MainSpinnerAdapter spinAdapter = new MainSpinnerAdapter(this, data);
+        MainSpinnerAdapter spinAdapter = new MainSpinnerAdapter(this, prefList);
         spinner.setAdapter(spinAdapter);
 
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                items.clear();
+                if(position == DEFAULT){
+                    items = db.selectList(null);
+                }
+                else{
+                    items = db.selectList(prefList.get(position));
+                }
+                listAdapter.addAll(items);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
         //getAppKeyHash();
     }
 
