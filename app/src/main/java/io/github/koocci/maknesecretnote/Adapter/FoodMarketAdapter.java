@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -79,7 +78,7 @@ public class FoodMarketAdapter extends BaseAdapter {
 
         ImageView thumb = convertView.findViewById(R.id.market_thumb);
         if(items.get(position).getImagePath() == null || "".equals(items.get(position).getImagePath())){
-            thumb.setImageResource(R.drawable.chinese);
+            thumb.setImageResource(R.drawable.defaultimage);
             // 임시 사진 보이기
         }
         else{

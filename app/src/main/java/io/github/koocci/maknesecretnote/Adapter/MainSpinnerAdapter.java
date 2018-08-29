@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.github.koocci.maknesecretnote.R;
@@ -26,6 +27,15 @@ public class MainSpinnerAdapter extends BaseAdapter {
         this.context = context;
         this.data = data;
         inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    public void addAll(List<String> result) {
+        data.clear();
+        if(data==null){
+            data = new ArrayList<>();
+        }
+        data.addAll(result);
+        notifyDataSetChanged();
     }
 
     @Override

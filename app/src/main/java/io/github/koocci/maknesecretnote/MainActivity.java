@@ -6,26 +6,23 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import io.github.koocci.maknesecretnote.Adapter.FoodMarketAdapter;
 import io.github.koocci.maknesecretnote.Adapter.MainSpinnerAdapter;
 import io.github.koocci.maknesecretnote.DO.FoodMarketItem;
-import io.github.koocci.maknesecretnote.DO.PrefItem;
+import io.github.koocci.maknesecretnote.Handler.BackPressHandler;
 import io.github.koocci.maknesecretnote.Handler.DBHelper;
 
 public class MainActivity extends RootActivity
@@ -41,10 +38,25 @@ public class MainActivity extends RootActivity
 
     private static final int DEFAULT = 0;
 
+    private BackPressHandler backPressHandler;
+
     FoodMarketAdapter listAdapter;
     List<String> prefList;
     DBHelper db;
     ArrayList<FoodMarketItem> items;
+    MainSpinnerAdapter spinAdapter;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        items.clear();
+        items = db.selectList(null);
+        prefList.clear();
+        prefList = db.selectListPref();
+        listAdapter.addAll(items);
+        spinAdapter.addAll(prefList);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +65,8 @@ public class MainActivity extends RootActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle("");
         setSupportActionBar(toolbar);
+
+        backPressHandler = new BackPressHandler(this);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -87,7 +101,7 @@ public class MainActivity extends RootActivity
 
         prefList = db.selectListPref();
 
-        MainSpinnerAdapter spinAdapter = new MainSpinnerAdapter(this, prefList);
+        spinAdapter = new MainSpinnerAdapter(this, prefList);
         spinner.setAdapter(spinAdapter);
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -144,4 +158,10 @@ public class MainActivity extends RootActivity
             Log.e("name not found", e.toString());
         }
     }
+
+    @Override
+    public void onBackPressed() {
+        backPressHandler.onBackPressed();
+    }
+
 }

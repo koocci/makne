@@ -10,5 +10,9 @@
     <string name="market_tel">전화번호</string>
     <string name="update">수정</string>
     <string name="delete">삭제</string>
+    <string name="complete">완료</string>
+    <string name="exit">취소</string>
+    <string name="input">입력</string>
+
 
 </resources>

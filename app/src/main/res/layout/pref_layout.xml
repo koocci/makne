@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="0dp"
+android:layout_weight="3"
+android:gravity="center"
+android:layout_marginBottom="10dp">
+
+<EditText
+    android:hint="@string/input"
+    android:gravity="center"
+    android:id="@+id/pref_cate"
+    android:layout_width="0dp"
+    android:layout_weight="3"
+    android:layout_height="match_parent" />
+
+<RatingBar
+    style="?android:attr/ratingBarStyleIndicator"
+    android:id="@+id/market_pref"
+    android:theme="@style/CustomRatingBar"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:isIndicator="false"
+    android:numStars="5"
+    android:rating="3"
+    android:stepSize="1"
+    android:max="5"
+    android:gravity="center"/>
+
+<Button
+    android:layout_margin="10dp"
+    android:background="@drawable/remove_red"
+    android:id="@+id/remove_cate"
+    android:layout_width="30dp"
+    android:layout_height="30dp"
+    android:gravity="center"
+    />
+
+</LinearLayout>

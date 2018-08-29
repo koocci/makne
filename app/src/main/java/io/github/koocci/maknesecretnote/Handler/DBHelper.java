@@ -124,9 +124,49 @@ public class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    public int insertMarket(String name, String phone, String address, String officehours, int visitcount, String category, String imagepath, String comment ) {
-        Log.e("helper", "insert");
-        Log.e("after", imagepath);
+    public void updateMarket(int market_id, String name, String phone, String address, String officehours, int visitcount, int category, String imagepath, String comment){
+        SQLiteDatabase db = getWritableDatabase();
+
+        ContentValues recordValues = new ContentValues();
+
+        recordValues.put("name", name);
+        recordValues.put("phone", phone);
+        recordValues.put("address", address);
+        recordValues.put("officehours", officehours);
+        recordValues.put("visitcount", visitcount);
+        recordValues.put("category", category);
+        recordValues.put("imagepath", imagepath);
+        recordValues.put("comment", comment);
+
+        String[] whereArgs = {String.valueOf(market_id)};
+        int rowAffected = (int) db.update("market", recordValues, "id = ?", whereArgs);
+
+        db.close();
+
+    }
+
+    public void deletePref(int market_id){
+        SQLiteDatabase db = getReadableDatabase();
+
+        String[] whereArgs = {String.valueOf(market_id)};
+        int rowAffected = (int) db.delete("preference", "market_id = ?", whereArgs);
+        Log.i("Delete rowAffected", rowAffected + "");
+        db.close();
+    }
+
+    public void deleteMarket(int market_id){
+        deletePref(market_id);
+        SQLiteDatabase db = getReadableDatabase();
+        String[] whereArgs = {String.valueOf(market_id)};
+        int rowAffected = (int) db.delete("market", "id = ?", whereArgs);
+        Log.i("Delete rowAffected", rowAffected + "");
+
+        db.close();
+
+        return;
+    }
+
+    public int insertMarket(String name, String phone, String address, String officehours, int visitcount, int category, String imagepath, String comment ) {
         SQLiteDatabase db = getWritableDatabase();
 
         ContentValues recordValues = new ContentValues();
@@ -260,7 +300,12 @@ public class DBHelper extends SQLiteOpenHelper {
 
 /*
 *
-* db delete 짜달라
+* default image path 설정
+* textView 글자체 고치기
+* 수정/삭제 버튼 올리기
+* 디자인 변경
+* 핑크 + 버튼
+* 인트로 색깔 알아보기
 *
 *
 * */

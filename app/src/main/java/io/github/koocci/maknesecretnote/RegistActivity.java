@@ -1,760 +1,591 @@
 package io.github.koocci.maknesecretnote;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationManager;
+import android.content.res.Resources;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
-import android.provider.Settings;
-import android.support.annotation.NonNull;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.support.v4.content.FileProvider;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RatingBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
-import com.google.android.gms.location.places.ui.PlacePicker;
-import com.google.android.gms.location.places.ui.PlaceSelectionListener;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.ui.PlacePicker;
-
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
-import noman.googleplaces.NRPlaces;
+import io.github.koocci.maknesecretnote.Adapter.CateSpinnerAdapter;
+import io.github.koocci.maknesecretnote.DO.FoodMarketItem;
+import io.github.koocci.maknesecretnote.DO.PrefItem;
+import io.github.koocci.maknesecretnote.Handler.DBHelper;
 
-import noman.googleplaces.PlaceType;
-import noman.googleplaces.PlacesException;
-import noman.googleplaces.PlacesListener;
+public class RegistActivity extends RootActivity {
 
-public class RegistActivity extends RootActivity
-        implements OnMapReadyCallback,
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener,
-        LocationListener,
-        PlacesListener {
+    private static final int CHINESE = 1;
+    private static final int KOREAN = 2;
+    private static final int JAPANESE = 3;
+    private static final int CHICKEN = 4;
+    private static final int MEAT = 5;
+    private static final int EXTRA = 6;
 
-    private GoogleApiClient mGoogleApiClient = null;
-    private GoogleMap mGoogleMap = null;
-    private Marker currentMarker = null;
+    private static final int REQ_CODE_SELECT_IMAGE=100;
+    private static final int REQUEST_IMAGE_CAPTURE = 672;
+    private static final int MAP_DATA = 1293;
 
-    private static final String TAG = "googlemap";
-    private static final int GPS_ENABLE_REQUEST_CODE = 2001;
-    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 2002;
-    private static final int UPDATE_INTERVAL_MS = 1000;  // 1초
-    private static final int FASTEST_UPDATE_INTERVAL_MS = 500; // 0.5초
+    private String imagepath;
 
-    private static final int PLACE_PICKER_REQUEST =1;
+    private Uri photoUri;
+
+    int id = 0;
+
+    LinearLayout layout;
+    EditText prefCate;
+    RatingBar marketPref;
+    LayoutInflater inflater;
+    ArrayList<PrefHolder> holder;
+    DBHelper db;
+
+    ImageView marketImage;
+    Button camera;
+    Button album;
+    EditText marketName;
+    EditText marketLoc;
+    EditText marketTel;
+    Spinner marketType;
+    Button complete;
+    Button exit;
+    Button mapIcon;
+    TextView marketCnt;
 
 
-    private AppCompatActivity mActivity;
-    boolean askPermissionOnceAgain = false;
-    boolean mRequestingLocationUpdates = false;
-    Location mCurrentLocatiion;
-    boolean mMoveMapByUser = true;
-    boolean mMoveMapByAPI = true;
-    LatLng currentPosition;
-
-    LocationRequest locationRequest = new LocationRequest()
-            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-            .setInterval(UPDATE_INTERVAL_MS)
-            .setFastestInterval(FASTEST_UPDATE_INTERVAL_MS);
-
-
-    List<Marker> previous_marker = null;
-
-    TextView market_name;
-    TextView market_loc;
-    Button search;
+    ArrayList<FoodMarketItem> item;
+    ArrayList<PrefItem> prefItem;
+    EditText marketComent;
+    int market_id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_regist);
 
+        checkPermissions();
 
-        Log.d(TAG, "onCreate");
-        mActivity = this;
+        marketImage = findViewById(R.id.market_image);
+        camera = findViewById(R.id.camera);
+        album = findViewById(R.id.album);
+        marketName = findViewById(R.id.market_name);
+        marketLoc = findViewById(R.id.market_loc);
+        marketTel = findViewById(R.id.market_tel);
+        marketType = findViewById(R.id.market_type);
+        complete = findViewById(R.id.complete);
+        exit = findViewById(R.id.exit);
+        mapIcon = findViewById(R.id.map_icon);
 
 
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
+        marketCnt = findViewById(R.id.market_cnt);
+        Button up = findViewById(R.id.up);
+        Button down = findViewById(R.id.down);
+        marketComent = findViewById(R.id.market_coment);
 
+        db = new DBHelper(this);
+        item = db.selectDetail(market_id);
+        prefItem = db.selectMarketPref(market_id);
 
-        MapFragment mapFragment = (MapFragment) getFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        marketCnt.setText(0 + "");
 
-        market_name = findViewById(R.id.market_name);
-        market_loc = findViewById(R.id.market_loc);
-        search = findViewById(R.id.search);
-        search.setOnClickListener(new Button.OnClickListener()
-        { @Override
-        public void onClick(View view)
-        {
-            PlacePicker.IntentBuilder intentBuilder = new PlacePicker.IntentBuilder();
-            try {
-                Intent intent = intentBuilder.build(RegistActivity.this);
-                startActivityForResult(intent,PLACE_PICKER_REQUEST);
-            } catch (GooglePlayServicesRepairableException e) {
-                e.printStackTrace();
-            } catch (GooglePlayServicesNotAvailableException e) {
-                e.printStackTrace();
-            }
-        }
-        });
+        marketImage.setImageResource(R.drawable.defaultimage);
+        marketTel.setText("미등록");
 
-        previous_marker = new ArrayList<Marker>();
+        List<Number> cateData = new ArrayList<>();
+        cateData.add(CHINESE);
+        cateData.add(KOREAN);
+        cateData.add(JAPANESE);
+        cateData.add(CHICKEN);
+        cateData.add(MEAT);
+        cateData.add(EXTRA);
 
-        Button button = (Button)findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener() {
+        CateSpinnerAdapter spinAdapter = new CateSpinnerAdapter(this, cateData);
+        marketType.setAdapter(spinAdapter);
+        marketType.setSelection(CHINESE);
+
+        up.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(currentPosition == null){
-                    Toast.makeText(RegistActivity.this, "잠시만 기다려 주세요", Toast.LENGTH_SHORT).show();
-                }
-                else{
-                    Log.d(TAG, "currentPosition : " + currentPosition);
-                    showPlaceInformation(currentPosition);
-                }
+
+                int cnt = Integer.parseInt(marketCnt.getText().toString());
+                cnt ++ ;
+                marketCnt.setText(cnt + "");
             }
         });
-    }
 
-    @Override
-    public void onPlacesFailure(PlacesException e) {
-        Log.d(TAG, "onPlacesFailure : " + e.getMessage());
-    }
-
-    @Override
-    public void onPlacesStart() {
-
-    }
-
-    @Override
-    public void onPlacesFinished() {
-
-    }
-
-    public void addMarker(noman.googleplaces.Place place){
-        LatLng latLng
-                = new LatLng(place.getLatitude()
-                , place.getLongitude());
-
-
-        String markerSnippet = getCurrentAddress(latLng);
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.title(place.getName());
-        markerOptions.snippet(markerSnippet);
-        Marker item = mGoogleMap.addMarker(markerOptions);
-        previous_marker.add(item);
-    }
-
-    @Override
-    public void onPlacesSuccess(final List<noman.googleplaces.Place> places) {
-
-        runOnUiThread(new Runnable() {
-
+        down.setOnClickListener(new View.OnClickListener() {
             @Override
+            public void onClick(View v) {
 
-            public void run() {
-
-                for (noman.googleplaces.Place place : places) {
-                    addMarker(place);
-                }
-
-                //중복 마커 제거
-                HashSet<Marker> hashSet = new HashSet<Marker>();
-                hashSet.addAll(previous_marker);
-                previous_marker.clear();
-                previous_marker.addAll(hashSet);
+                int cnt = Integer.parseInt(marketCnt.getText().toString());
+                cnt --;
+                if(cnt < 0)
+                    cnt = 0;
+                marketCnt.setText(cnt + "");
             }
         });
-    }
 
-    public void clearMapNMarker(){
-        mGoogleMap.clear();//지도 클리어
-
-        if (previous_marker != null)
-            previous_marker.clear();//지역정보 마커 클리어
-    }
-
-    public void showPlaceInformation(final LatLng location) {
-        clearMapNMarker();
-
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(location, 18);
-        mGoogleMap.moveCamera(cameraUpdate);
-        Handler handler = new Handler();
-        handler.post(new Runnable() {
+        camera.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                new NRPlaces.Builder()
-                        .listener(RegistActivity.this)
-                        .key("AIzaSyDkxoen__RNOPoU6iUMzflWcAi32LDo71A")
-                        .latlng(location.latitude, location.longitude)//현재 위치
-                        .radius(150) //150 미터 내에서 검색
-                        .type(PlaceType.RESTAURANT) //음식점
-                        .language("ko", "KR")
-                        .build()
-                        .execute();
+            public void onClick(View v) {
+                sendTakePhotoIntent();
             }
         });
-    }
 
-    @Override
-    public void onResume() {
-
-        super.onResume();
-
-        if (mGoogleApiClient.isConnected()) {
-
-            Log.d(TAG, "onResume : call startLocationUpdates");
-            if (!mRequestingLocationUpdates) startLocationUpdates();
-        }
-
-
-        //앱 정보에서 퍼미션을 허가했는지를 다시 검사해봐야 한다.
-        if (askPermissionOnceAgain) {
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                askPermissionOnceAgain = false;
-
-                checkPermissions();
-            }
-        }
-    }
-
-    private void startLocationUpdates() {
-
-        if (!checkLocationServicesStatus()) {
-
-            Log.d(TAG, "startLocationUpdates : call showDialogForLocationServiceSetting");
-            showDialogForLocationServiceSetting();
-        }else {
-
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                Log.d(TAG, "startLocationUpdates : 퍼미션 안가지고 있음");
-                return;
-            }
-
-
-            Log.d(TAG, "startLocationUpdates : call FusedLocationApi.requestLocationUpdates");
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, this);
-            mRequestingLocationUpdates = true;
-
-            mGoogleMap.setMyLocationEnabled(true);
-
-        }
-
-    }
-
-
-
-    private void stopLocationUpdates() {
-
-        Log.d(TAG,"stopLocationUpdates : LocationServices.FusedLocationApi.removeLocationUpdates");
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        mRequestingLocationUpdates = false;
-    }
-
-
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-
-        Log.d(TAG, "onMapReady :");
-
-        mGoogleMap = googleMap;
-
-        mGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+        album.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onMarkerClick(Marker marker) {
-                market_name.setText(marker.getTitle());
-                market_loc.setText(marker.getSnippet());
-                return false;
+            public void onClick(View v) {
+                selectUpload();
             }
         });
 
-
-        //런타임 퍼미션 요청 대화상자나 GPS 활성 요청 대화상자 보이기전에
-        //지도의 초기위치를 서울로 이동
-        setDefaultLocation();
-
-        //mGoogleMap.getUiSettings().setZoomControlsEnabled(false);
-        mGoogleMap.getUiSettings().setMyLocationButtonEnabled(true);
-        mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(18));
-        mGoogleMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener(){
-
+        mapIcon.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onMyLocationButtonClick() {
-
-                Log.d( TAG, "onMyLocationButtonClick : 위치에 따른 카메라 이동 활성화");
-                mMoveMapByAPI = true;
-                return true;
+            public void onClick(View v) {
+                Intent i = new Intent(RegistActivity.this, MapActivity.class);
+                startActivityForResult(i, MAP_DATA);
             }
         });
-        mGoogleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
+        complete.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onMapClick(final LatLng latLng) {
+            public void onClick(View v) {
+                //insertMarket(String name, String phone, String address, String officehours, int visitcount, String category, String imagepath, String comment )
+                insertMarket();
 
-                Log.d( TAG, "onMapClick :");
-                showPlaceInformation(latLng);
 
             }
         });
 
-        mGoogleMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
-
+        exit.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCameraMoveStarted(int i) {
-
-                if (mMoveMapByUser == true && mRequestingLocationUpdates){
-
-                    Log.d(TAG, "onCameraMove : 위치에 따른 카메라 이동 비활성화");
-                    mMoveMapByAPI = false;
-                }
-
-                mMoveMapByUser = true;
-
-            }
-        });
-
-
-        mGoogleMap.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
-
-            @Override
-            public void onCameraMove() {
-
-
-            }
-        });
-    }
-
-
-    @Override
-    public void onLocationChanged(Location location) {
-        currentPosition = new LatLng( location.getLatitude(), location.getLongitude());
-        mCurrentLocatiion = location;
-    }
-
-
-    @Override
-    protected void onStart() {
-
-        if(mGoogleApiClient != null && mGoogleApiClient.isConnected() == false){
-
-            Log.d(TAG, "onStart: mGoogleApiClient connect");
-            mGoogleApiClient.connect();
-        }
-
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-
-        if (mRequestingLocationUpdates) {
-
-            Log.d(TAG, "onStop : call stopLocationUpdates");
-            stopLocationUpdates();
-        }
-
-        if ( mGoogleApiClient.isConnected()) {
-
-            Log.d(TAG, "onStop : mGoogleApiClient disconnect");
-            mGoogleApiClient.disconnect();
-        }
-
-        super.onStop();
-    }
-
-
-    @Override
-    public void onConnected(Bundle connectionHint) {
-
-
-        if ( mRequestingLocationUpdates == false ) {
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
-                int hasFineLocationPermission = ContextCompat.checkSelfPermission(this,
-                        Manifest.permission.ACCESS_FINE_LOCATION);
-
-                if (hasFineLocationPermission == PackageManager.PERMISSION_DENIED) {
-
-                    ActivityCompat.requestPermissions(mActivity,
-                            new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                            PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-
-                } else {
-
-                    Log.d(TAG, "onConnected : 퍼미션 가지고 있음");
-                    Log.d(TAG, "onConnected : call startLocationUpdates");
-                    startLocationUpdates();
-                    mGoogleMap.setMyLocationEnabled(true);
-                }
-
-            }else{
-
-                Log.d(TAG, "onConnected : call startLocationUpdates");
-                startLocationUpdates();
-                mGoogleMap.setMyLocationEnabled(true);
-            }
-        }
-    }
-
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-
-        Log.d(TAG, "onConnectionFailed");
-        setDefaultLocation();
-    }
-
-
-    @Override
-    public void onConnectionSuspended(int cause) {
-
-        Log.d(TAG, "onConnectionSuspended");
-        if (cause == CAUSE_NETWORK_LOST)
-            Log.e(TAG, "onConnectionSuspended(): Google Play services " +
-                    "connection lost.  Cause: network lost.");
-        else if (cause == CAUSE_SERVICE_DISCONNECTED)
-            Log.e(TAG, "onConnectionSuspended():  Google Play services " +
-                    "connection lost.  Cause: service disconnected");
-    }
-
-
-    public String getCurrentAddress(LatLng latlng) {
-
-        //지오코더... GPS를 주소로 변환
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-
-        List<Address> addresses;
-
-        try {
-
-            addresses = geocoder.getFromLocation(
-                    latlng.latitude,
-                    latlng.longitude,
-                    1);
-        } catch (IOException ioException) {
-            //네트워크 문제
-            Toast.makeText(this, "지오코더 서비스 사용불가", Toast.LENGTH_LONG).show();
-            return "지오코더 서비스 사용불가";
-        } catch (IllegalArgumentException illegalArgumentException) {
-            Toast.makeText(this, "잘못된 GPS 좌표", Toast.LENGTH_LONG).show();
-            return "잘못된 GPS 좌표";
-
-        }
-
-
-        if (addresses == null || addresses.size() == 0) {
-            Toast.makeText(this, "주소 미발견", Toast.LENGTH_LONG).show();
-            return "주소 미발견";
-
-        } else {
-            Address address = addresses.get(0);
-            return address.getAddressLine(0).toString();
-        }
-
-    }
-
-
-    public boolean checkLocationServicesStatus() {
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-                || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-    }
-
-
-//    public void setCurrentLocation(Location location, String markerTitle, String markerSnippet) {
-//
-//        mMoveMapByUser = false;
-//
-//
-//        if (currentMarker != null) currentMarker.remove();
-//
-//
-//        LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-//
-//        MarkerOptions markerOptions = new MarkerOptions();
-//        markerOptions.position(currentLatLng);
-//        markerOptions.title(markerTitle);
-//        markerOptions.snippet(markerSnippet);
-//        markerOptions.draggable(true);
-//
-//        //구글맵의 디폴트 현재 위치는 파란색 동그라미로 표시
-//        //마커를 원하는 이미지로 변경하여 현재 위치 표시하도록 수정 fix - 2017. 11.27
-//        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher));
-//
-//        currentMarker = mGoogleMap.addMarker(markerOptions);
-//
-//
-//        if ( mMoveMapByAPI ) {
-//
-//            Log.d( TAG, "setCurrentLocation :  mGoogleMap moveCamera "
-//                    + location.getLatitude() + " " + location.getLongitude() ) ;
-//            // CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(currentLatLng, 15);
-//            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(currentLatLng);
-//            mGoogleMap.moveCamera(cameraUpdate);
-//        }
-//    }
-
-
-    public void setDefaultLocation() {
-
-        mMoveMapByUser = false;
-
-
-        //디폴트 위치, Seoul
-        LatLng DEFAULT_LOCATION = new LatLng(37.56, 126.97);
-        String markerTitle = "위치정보 가져올 수 없음";
-        String markerSnippet = "위치 퍼미션과 GPS 활성 요부 확인하세요";
-
-
-        if (currentMarker != null) currentMarker.remove();
-
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(DEFAULT_LOCATION);
-        markerOptions.title(markerTitle);
-        markerOptions.snippet(markerSnippet);
-        markerOptions.draggable(true);
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-        currentMarker = mGoogleMap.addMarker(markerOptions);
-
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(DEFAULT_LOCATION, 15);
-        mGoogleMap.moveCamera(cameraUpdate);
-
-    }
-
-
-    //여기부터는 런타임 퍼미션 처리을 위한 메소드들
-    @TargetApi(Build.VERSION_CODES.M)
-    private void checkPermissions() {
-        boolean fineLocationRationale = ActivityCompat
-                .shouldShowRequestPermissionRationale(this,
-                        Manifest.permission.ACCESS_FINE_LOCATION);
-        int hasFineLocationPermission = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION);
-
-        if (hasFineLocationPermission == PackageManager
-                .PERMISSION_DENIED && fineLocationRationale)
-            showDialogForPermission("앱을 실행하려면 퍼미션을 허가하셔야합니다.");
-
-        else if (hasFineLocationPermission
-                == PackageManager.PERMISSION_DENIED && !fineLocationRationale) {
-            showDialogForPermissionSetting("퍼미션 거부 + Don't ask again(다시 묻지 않음) " +
-                    "체크 박스를 설정한 경우로 설정에서 퍼미션 허가해야합니다.");
-        } else if (hasFineLocationPermission == PackageManager.PERMISSION_GRANTED) {
-
-
-            Log.d(TAG, "checkPermissions : 퍼미션 가지고 있음");
-
-            if ( mGoogleApiClient.isConnected() == false) {
-
-                Log.d(TAG, "checkPermissions : 퍼미션 가지고 있음");
-                mGoogleApiClient.connect();
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int permsRequestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-
-        if (permsRequestCode
-                == PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION && grantResults.length > 0) {
-
-            boolean permissionAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-
-            if (permissionAccepted) {
-
-
-                if ( mGoogleApiClient.isConnected() == false) {
-
-                    Log.d(TAG, "onRequestPermissionsResult : mGoogleApiClient connect");
-                    mGoogleApiClient.connect();
-                }
-
-
-
-            } else {
-
-                checkPermissions();
-            }
-        }
-    }
-
-
-    @TargetApi(Build.VERSION_CODES.M)
-    private void showDialogForPermission(String msg) {
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(RegistActivity.this);
-        builder.setTitle("알림");
-        builder.setMessage(msg);
-        builder.setCancelable(false);
-        builder.setPositiveButton("예", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                ActivityCompat.requestPermissions(mActivity,
-                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                        PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-            }
-        });
-
-        builder.setNegativeButton("아니오", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
+            public void onClick(View v) {
                 finish();
             }
         });
-        builder.create().show();
-    }
 
-    private void showDialogForPermissionSetting(String msg) {
+        prefCate = findViewById(R.id.pref_cate);
+        marketPref = findViewById(R.id.market_pref);
+        Button addCate = findViewById(R.id.add_cate);
+        layout = findViewById(R.id.layout);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(RegistActivity.this);
-        builder.setTitle("알림");
-        builder.setMessage(msg);
-        builder.setCancelable(true);
-        builder.setPositiveButton("예", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
+        holder = new ArrayList<>();
 
-                askPermissionOnceAgain = true;
-
-                Intent myAppSettings = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                        Uri.parse("package:" + mActivity.getPackageName()));
-                myAppSettings.addCategory(Intent.CATEGORY_DEFAULT);
-                myAppSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                mActivity.startActivity(myAppSettings);
-            }
-        });
-        builder.setNegativeButton("아니오", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                finish();
-            }
-        });
-        builder.create().show();
-    }
-
-
-    //여기부터는 GPS 활성화를 위한 메소드들
-    private void showDialogForLocationServiceSetting() {
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(RegistActivity.this);
-        builder.setTitle("위치 서비스 비활성화");
-        builder.setMessage("앱을 사용하기 위해서는 위치 서비스가 필요합니다.\n"
-                + "위치 설정을 수정하실래요?");
-        builder.setCancelable(true);
-        builder.setPositiveButton("설정", new DialogInterface.OnClickListener() {
+        addCate.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int id) {
-                Intent callGPSSettingIntent
-                        = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                startActivityForResult(callGPSSettingIntent, GPS_ENABLE_REQUEST_CODE);
+            public void onClick(View v) {
+                if(prefCate.getText() == null || "".equals(prefCate.getText().toString())){
+                    Toast.makeText(getApplicationContext(), "선호도 대상을 입력해 주세요", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                getPrefs(prefCate.getText().toString(), (int)marketPref.getRating());
             }
         });
-        builder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.cancel();
-            }
-        });
-        builder.create().show();
+
+        for(int i = 0; i < prefItem.size(); i++){
+            getPrefs(prefItem.get(i).getName(), prefItem.get(i).getScore());
+        }
+
     }
 
+    public void getPrefs(String prefCateText, int prefRating){
+
+        LinearLayout prefLayout = new LinearLayout(getApplicationContext());
+        prefLayout.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 3f);
+        prefLayout.setLayoutParams(params);
+
+        TextView addPrefCate = new TextView(getApplicationContext());
+        addPrefCate.setText(prefCateText);
+        addPrefCate.setHintTextColor(Color.BLACK);
+
+        params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 3f);
+        addPrefCate.setGravity(Gravity.CENTER);
+        addPrefCate.setLayoutParams(params);
+
+        RatingBar addMarketPref = new RatingBar(getApplicationContext(), null, android.R.attr.ratingBarStyleIndicator);
+        params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        addMarketPref.setIsIndicator(true);
+        addMarketPref.setNumStars(5);
+        addMarketPref.setMax(5);
+        addMarketPref.setStepSize(1);
+        addMarketPref.setRating(prefRating);
+        addMarketPref.setLayoutParams(params);
+        // ?android:attr/ratingBarStyleIndicator
+
+        Button removeCate = new Button(getApplicationContext());
+        removeCate.setBackgroundResource(R.drawable.remove_red);
+        params = new LinearLayout.LayoutParams(convertDpToPixel(30), convertDpToPixel(30));
+        params.setMargins(convertDpToPixel(10), convertDpToPixel(10), convertDpToPixel(10), convertDpToPixel(10));
+        removeCate.setLayoutParams(params);
+
+
+        prefLayout.setTag(id);
+        removeCate.setTag(id);
+        id++;
+
+        removeCate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Button b = (Button) v;
+                int tag = (int) b.getTag();
+                Log.e("click tag", "" + tag);
+
+                for(int i = 0; i < holder.size(); i++) {
+                    if((int)(holder.get(i).getLayout().getTag()) == tag) {
+                        holder.remove(i);
+                        layout.removeViewAt(i + 2);
+                        break;
+                    }
+                }
+            }
+        });
+        prefLayout.addView(addPrefCate);
+        prefLayout.addView(addMarketPref);
+        prefLayout.addView(removeCate);
+
+        holder.add(new PrefHolder(prefLayout, removeCate, prefCateText, prefRating));
+
+        layout.addView(prefLayout);
+    }
+
+    public class PrefHolder{
+        private LinearLayout layout;
+        private Button btn;
+        private String name;
+        private int score;
+
+        public PrefHolder(LinearLayout layout, Button btn, String name, int score) {
+            this.layout = layout;
+            this.btn = btn;
+            this.name = name;
+            this.score = score;
+        }
+
+        public LinearLayout getLayout() {
+            return layout;
+        }
+
+        public void setLayout(LinearLayout layout) {
+            this.layout = layout;
+        }
+
+        public Button getBtn() {
+            return btn;
+        }
+
+        public void setBtn(Button btn) {
+            this.btn = btn;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getScore() {
+            return score;
+        }
+
+        public void setScore(int score) {
+            this.score = score;
+        }
+    }
+
+    private void selectUpload(){
+        //버튼 클릭시 처리로직
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType(android.provider.MediaStore.Images.Media.CONTENT_TYPE);
+        intent.setData(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(intent, REQ_CODE_SELECT_IMAGE);
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == PLACE_PICKER_REQUEST && resultCode == Activity.RESULT_OK){
-            final Place place = PlacePicker.getPlace(RegistActivity.this, data);
-            final CharSequence name = place.getName();
-            final CharSequence address = place.getAddress();
-            String attributions = (String) place.getAttributions();
-            if (attributions == null) {
-                attributions = "";
+
+        if(requestCode == REQ_CODE_SELECT_IMAGE) {
+            if(resultCode== Activity.RESULT_OK) {
+                try {
+                    //Uri에서 이미지 이름을 얻어온다.
+                    String name_Str = getImageNameToUri(data.getData());
+
+                    //이미지 데이터를 비트맵으로 받아온다.
+                    Bitmap image_bitmap 	= MediaStore.Images.Media.getBitmap(getContentResolver(), data.getData());
+                    ImageView image = (ImageView)findViewById(R.id.image);
+
+                    //배치해놓은 ImageView에 set
+                    image.setImageBitmap(image_bitmap);
+
+                } catch (FileNotFoundException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
             }
-            market_name.setText(name);
-            market_loc.setText(address);
+        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            Bitmap bitmap = BitmapFactory.decodeFile(imagepath);
+            ExifInterface exif = null;
 
-            clearMapNMarker();
+            try {
+                exif = new ExifInterface(imagepath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
-            String markerSnippet = address.toString();
-            MarkerOptions markerOptions = new MarkerOptions();
-            markerOptions.position(place.getLatLng());
-            markerOptions.title(name.toString());
-            markerOptions.snippet(markerSnippet);
-            Marker item = mGoogleMap.addMarker(markerOptions);
-            previous_marker.add(item);
+            int exifOrientation;
+            int exifDegree;
 
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(place.getLatLng(), 18);
-            mGoogleMap.moveCamera(cameraUpdate);
+            if (exif != null) {
+                exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                exifDegree = exifOrientationToDegrees(exifOrientation);
+            } else {
+                exifDegree = 0;
+            }
 
+            marketImage.setImageBitmap(rotate(bitmap, exifDegree));
         }
-        else{
-            super.onActivityResult(requestCode, resultCode, data);
-            switch (requestCode) {
-                case GPS_ENABLE_REQUEST_CODE:
-                    //사용자가 GPS 활성 시켰는지 검사
-                    if (checkLocationServicesStatus()) {
-                        if (checkLocationServicesStatus()) {
-                            Log.d(TAG, "onActivityResult : 퍼미션 가지고 있음");
-                            if ( mGoogleApiClient.isConnected() == false ) {
-                                Log.d( TAG, "onActivityResult : mGoogleApiClient connect ");
-                                mGoogleApiClient.connect();
-                            }
-                            return;
+        else if(requestCode == MAP_DATA && resultCode == RESULT_OK){
+            String mapName = data.getStringExtra("name");
+            String mapLoc = data.getStringExtra("loc");
+            marketName.setText(mapName);
+            marketLoc.setText(mapLoc);
+        }
+    }
+
+    public String getImageNameToUri(Uri data)
+    {
+        String[] proj = { MediaStore.Images.Media.DATA };
+        Cursor cursor = managedQuery(data, proj, null, null, null);
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+
+        cursor.moveToFirst();
+
+        imagepath = cursor.getString(column_index);
+
+        Bitmap bmImg = BitmapFactory.decodeFile(imagepath);
+        marketImage.setImageBitmap(bmImg);
+
+        Log.e("imagepath", imagepath);
+        String imgName = imagepath.substring(imagepath.lastIndexOf("/")+1);
+
+        return imgName;
+    }
+
+    private int exifOrientationToDegrees(int exifOrientation) {
+        if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
+            return 90;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
+            return 180;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
+            return 270;
+        }
+        return 0;
+    }
+
+    private Bitmap rotate(Bitmap bitmap, float degree) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degree);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+    private void sendTakePhotoIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+//                file:///storage/emulated/0/Android/data/com.example.ggoreb.samplecamera/files/Pictures/
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
+            Log.e("getPackageName()", getPackageName());
+
+            if (photoFile != null) {
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { // 24 버전 이상
+                    photoUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photoFile);
+                } else { // 24 버전 미만
+                    photoUri = Uri.fromFile(photoFile);
+                }
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }
+        }
+    }
+
+    private File createImageFile() throws IOException {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "TEST_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+//        File storageDir = Environment.getExternalStorageDirectory();
+
+        Log.e("storage1", Environment.DIRECTORY_PICTURES);
+        Log.e("storage2", Environment.getExternalStorageDirectory().getAbsolutePath());
+        Log.e("storage3", storageDir.getAbsolutePath());
+
+        File image = File.createTempFile(
+                imageFileName,      /* prefix */
+                ".jpg",         /* suffix */
+                storageDir          /* directory */
+        );
+        imagepath = image.getAbsolutePath();
+        Log.e("path", imagepath);
+        return image;
+    }
+
+    public void checkPermissions() {
+        String[] permissions = {
+                Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+        };
+
+        int permissionCheck = PackageManager.PERMISSION_GRANTED;
+        for (int i = 0; i < permissions.length; i++) {
+            permissionCheck = ContextCompat.checkSelfPermission(this, permissions[i]);
+            if (permissionCheck == PackageManager.PERMISSION_DENIED) {
+                break;
+            }
+        }
+
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            Log.d("Camera", "권한 있음");
+        } else {
+            Log.d("Camera", "권한 없음");
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permissions[0])) {
+                Log.d("Camera", "권한 설명 필요함");
+            } else {
+                ActivityCompat.requestPermissions(this, permissions, 1);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (requestCode == 1) {
+            for (int i = 0; i < permissions.length; i++) {
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d("Camera", "권한 승인됨");
+                } else {
+                    Log.d("Camera", "권한 승인되지 않음");
+                }
+            }
+        }
+    }
+
+    public void insertPref(int market_id){
+        for(int i = 0; i < holder.size(); i++){
+            db.insertPref(market_id, holder.get(i).getName(), holder.get(i).getScore());
+        }
+    }
+
+    public void insertMarket(){
+        AlertDialog.Builder builder1 = new AlertDialog.Builder(RegistActivity.this);
+        builder1.setMessage("정말로 등록하시겠습니까?");
+        builder1.setCancelable(true);
+
+        builder1.setPositiveButton(
+                "Yes",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+
+                        if(marketName.getText() == null || "".equals(marketName.getText())){
+                            Toast.makeText(getApplicationContext(), "이름을 정확히 입력해 주세요", Toast.LENGTH_LONG).show();
                         }
+                        else if(marketLoc.getText() == null || "".equals(marketLoc.getText())){
+                            Toast.makeText(getApplicationContext(), "주소를 정확히 입력해 주세요", Toast.LENGTH_LONG).show();
+                        }
+                        else if(marketCnt.getText() == null || "".equals(marketCnt.getText())){
+                            Toast.makeText(getApplicationContext(), "방문 횟수를 정확히 입력해 주세요", Toast.LENGTH_LONG).show();
+                        }
+
+                        market_id = db.insertMarket(
+                                marketName.getText().toString(),
+                                marketTel.getText().toString(),
+                                marketLoc.getText().toString(),
+                                null,
+                                Integer.parseInt(marketCnt.getText().toString()),
+                                marketType.getSelectedItemPosition(),
+                                imagepath,
+                                marketComent.getText().toString()
+                        );
+
+                        insertPref(market_id);
+
+                        Toast.makeText(getApplicationContext(), "등록 되었습니다", Toast.LENGTH_LONG).show();
+                        dialog.cancel();
+                        finish();
                     }
-                    break;
-            }
-        }
+                });
+
+        builder1.setNegativeButton(
+                "No",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        AlertDialog alert11 = builder1.create();
+        alert11.show();
+    }
+
+    public int convertDpToPixel(float dp) {
+
+        Resources resources = getResources();
+
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+
+        float px = dp * (metrics.densityDpi / 160f);
+
+        return (int) px;
+
     }
 }
