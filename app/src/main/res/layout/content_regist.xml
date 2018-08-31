@@ -6,7 +6,7 @@
     android:orientation="vertical">
 
     <RelativeLayout
-        android:layout_weight="35"
+        android:layout_weight="45"
         android:layout_width="match_parent"
         android:layout_height="0dp">
 
@@ -47,6 +47,8 @@
         android:layout_height="0dp">
 
         <LinearLayout
+            android:focusable="true"
+            android:focusableInTouchMode="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
@@ -69,7 +71,7 @@
                         android:layout_width="0dp"
                         android:layout_weight="10"
                         android:layout_height="wrap_content"
-                        android:text="@string/market_name"
+                        android:hint="@string/market_name"
                         android:textSize="30dp"
                         android:layout_marginBottom="10dp"
                         android:gravity="center_vertical"/>
@@ -89,7 +91,7 @@
 
                 <EditText
                     android:id="@+id/market_loc"
-                    android:text="@string/market_loc"
+                    android:hint="@string/market_loc"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="20dp"
@@ -112,7 +114,7 @@
 
                     <EditText
                         android:id="@+id/market_tel"
-                        android:text="@string/market_tel"
+                        android:hint="@string/market_tel"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="7"
@@ -243,7 +245,7 @@
 
                     <Button
                         android:layout_margin="10dp"
-                        android:background="@drawable/plus_blue"
+                        android:background="@drawable/plus_red"
                         android:id="@+id/add_cate"
                         android:layout_width="30dp"
                         android:layout_height="30dp"
@@ -286,32 +288,5 @@
         </LinearLayout>
 
     </ScrollView>
-
-    <LinearLayout
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_weight="10"
-        android:layout_width="match_parent"
-        android:layout_height="0dp">
-
-        <Button
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:text="@string/complete"
-            android:id="@+id/complete"
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent" />
-
-        <Button
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:text="@string/exit"
-            android:id="@+id/exit"
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent" />
-
-    </LinearLayout>
 
 </LinearLayout>

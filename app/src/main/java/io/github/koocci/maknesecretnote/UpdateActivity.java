@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Typeface;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
@@ -256,66 +257,6 @@ public class UpdateActivity extends RootActivity {
 
                 getPrefs(prefCate.getText().toString(), (int)marketPref.getRating());
 
-//                LinearLayout prefLayout = new LinearLayout(getApplicationContext());
-//                prefLayout.setGravity(Gravity.CENTER);
-//                LinearLayout.LayoutParams params =
-//                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 3f);
-//                prefLayout.setLayoutParams(params);
-//
-//                TextView addPrefCate = new EditText(getApplicationContext());
-//                addPrefCate.setText(prefCate.getText());
-//                addPrefCate.setHintTextColor(Color.BLACK);
-//
-//                params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 3f);
-//                addPrefCate.setGravity(Gravity.CENTER);
-//                addPrefCate.setLayoutParams(params);
-//
-//                RatingBar addMarketPref = new RatingBar(getApplicationContext(), null, android.R.attr.ratingBarStyleIndicator);
-//                addMarketPref.setRating(marketPref.getRating());
-//                params = new LinearLayout.LayoutParams(
-//                        LinearLayout.LayoutParams.WRAP_CONTENT,
-//                        LinearLayout.LayoutParams.WRAP_CONTENT);
-//                addMarketPref.setIsIndicator(false);
-//                addMarketPref.setNumStars(5);
-//                addMarketPref.setMax(5);
-//                addMarketPref.setRating(3f);
-//                addMarketPref.setLayoutParams(params);
-//                // ?android:attr/ratingBarStyleIndicator
-//
-//                Button removeCate = new Button(getApplicationContext());
-//                removeCate.setBackgroundResource(R.drawable.remove_red);
-//                params = new LinearLayout.LayoutParams(convertDpToPixel(30), convertDpToPixel(30));
-//                params.setMargins(convertDpToPixel(10), convertDpToPixel(10), convertDpToPixel(10), convertDpToPixel(10));
-//                removeCate.setLayoutParams(params);
-//
-//
-//                prefLayout.setTag(id);
-//                removeCate.setTag(id);
-//                id++;
-
-//                removeCate.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        Button b = (Button) v;
-//                        int tag = (int) b.getTag();
-//                        Log.e("click tag", "" + tag);
-//
-//                        for(int i = 0; i < holder.size(); i++) {
-//                            if((int)(holder.get(i).getLayout().getTag()) == tag) {
-//                                holder.remove(i);
-//                                layout.removeViewAt(i + 2);
-//                                break;
-//                            }
-//                        }
-//                    }
-//                });
-//                prefLayout.addView(addPrefCate);
-//                prefLayout.addView(addMarketPref);
-//                prefLayout.addView(removeCate);
-//
-//                holder.add(new PrefHolder(prefLayout, removeCate, prefCate.getText().toString(), (int)marketPref.getRating()));
-//
-//                layout.addView(prefLayout);
             }
         });
 
@@ -334,9 +275,12 @@ public class UpdateActivity extends RootActivity {
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 3f);
         prefLayout.setLayoutParams(params);
 
-        TextView addPrefCate = new TextView(getApplicationContext());
+        TextView addPrefCate = new EditText(getApplicationContext());
         addPrefCate.setText(prefCateText);
         addPrefCate.setHintTextColor(Color.BLACK);
+
+        Typeface type = Typeface.createFromAsset(getAssets(),"fonts/Typo_CrayonM.ttf");
+        addPrefCate.setTypeface(type);
 
         params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 3f);
         addPrefCate.setGravity(Gravity.CENTER);

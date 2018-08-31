@@ -296,16 +296,3 @@ public class DBHelper extends SQLiteOpenHelper {
         return data;
     }
 }
-
-
-/*
-*
-* default image path 설정
-* textView 글자체 고치기
-* 수정/삭제 버튼 올리기
-* 디자인 변경
-* 핑크 + 버튼
-* 인트로 색깔 알아보기
-*
-*
-* */

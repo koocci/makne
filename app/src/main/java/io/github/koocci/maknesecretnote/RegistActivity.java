@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Typeface;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
@@ -231,9 +232,12 @@ public class RegistActivity extends RootActivity {
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 3f);
         prefLayout.setLayoutParams(params);
 
-        TextView addPrefCate = new TextView(getApplicationContext());
+        TextView addPrefCate = new EditText(getApplicationContext());
         addPrefCate.setText(prefCateText);
         addPrefCate.setHintTextColor(Color.BLACK);
+
+        Typeface type = Typeface.createFromAsset(getAssets(),"fonts/Typo_CrayonM.ttf");
+        addPrefCate.setTypeface(type);
 
         params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 3f);
         addPrefCate.setGravity(Gravity.CENTER);
